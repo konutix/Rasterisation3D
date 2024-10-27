@@ -1,2 +1,2 @@
-# RayTracer
-C++ 3D renderer with raytracing
+# Rasterisation
+3D rasterizer C++ code
