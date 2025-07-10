@@ -1,6 +1,7 @@
 #pragma once
 #include <list>
 #include <string>
+#include <vector>
 
 #include "MathGraLib.h"
 
@@ -14,7 +15,9 @@ class Triangle
 {
 public:
 
-	FloatVec3 a, b, c;
+	FloatVec3 a;
+	FloatVec3 b;
+	FloatVec3 c;
 
 	Triangle()
 	{
@@ -22,11 +25,8 @@ public:
 	}
 
 	Triangle(FloatVec3 v1, FloatVec3 v2, FloatVec3 v3)
-	{
-		a = v1;
-		b = v2;
-		c = v3;
-	}
+		: a(v1), b(v2), c(v3)
+	{}
 
 	FloatVec3& operator[](int i)
 	{
@@ -35,7 +35,7 @@ public:
 		return c;
 	}
 
-	void Transform(FloatMat4 mat)
+	void Transform(FloatMat4 const& mat)
 	{
 		a = a * mat;
 		b = b * mat;
@@ -64,21 +64,18 @@ public:
 			fc.Normalize();
 
 			FloatVec3 x = fa.Cross(fb);
-			//cout << x.Dot(plane.normal) << endl;
 			if(x.Dot(plane.normal) > PLUS_ZERO)
 			{
 				return 0;
 			}
 
 			x = fb.Cross(fc);
-			//cout << x.Dot(plane.normal) << endl;
 			if(x.Dot(plane.normal) > PLUS_ZERO)
 			{
 				return 0;
 			}
 
 			x = fc.Cross(fa);
-			//cout << x.Dot(plane.normal) << endl;
 			if (x.Dot(plane.normal) > PLUS_ZERO)
 			{
 				return 0;
@@ -87,6 +84,10 @@ public:
 			pa = intpoint;
 			return 1;
 		}
+		else
+		{
+			return -1;
+		}
 	}
 };
 
@@ -94,47 +95,21 @@ class Mesh
 {
 public:
 
-	int vSize;
-	int tSize;
+	int vSize = 0;
+	int tSize = 0;
 
-	FloatVec3* vertices;
-	FloatVec3* vertNormals;
-	FloatVec3* vertTex;
+	std::vector<FloatVec3> vertices;
+	std::vector<FloatVec3> vertNormals;
+	std::vector<FloatVec3> vertTex;
 
-	IntVec3* indices;
+	std::vector<IntVec3> indices;
 
-	Mesh()
-	{
-		vSize = 1;
-		tSize = 1;
+	Mesh() = default;
 
-		vertices = new FloatVec3[vSize]();
-		vertNormals = new FloatVec3[vSize]();
-		vertTex = new FloatVec3[vSize]();
+	~Mesh() = default;
 
-		indices = new IntVec3[tSize]();
-	}
-
-	~Mesh()
-	{
-		delete vertices;
-		delete vertNormals;
-		delete vertTex;
-		delete indices;
-	}
-
-	void reset()
-	{
-		delete vertices;
-		delete vertNormals;
-		delete vertTex;
-		delete indices;
-		vertices = new FloatVec3[vSize]();
-		vertNormals = new FloatVec3[vSize]();
-		vertTex = new FloatVec3[vSize]();
-		indices = new IntVec3[tSize]();
-	}
-
+	void Reset();
+	
 	void calcNormals()
 	{
 		for (int i = 0; i < vSize; i++)
@@ -161,6 +136,29 @@ public:
 		}
 	}
 
+	void Plane(float size)
+	{
+		float a = size / 2.0f;
+
+		vSize = 4;
+		tSize = 2;
+
+		Reset();
+
+		vertices[0] = FloatVec3(-a, a, -a);
+		vertices[1] = FloatVec3(-a, a, a);
+		vertices[2] = FloatVec3(a, a, -a);
+		vertices[3] = FloatVec3(a, a, a);
+
+		indices[0] = IntVec3(0, 2, 1);
+		indices[1] = IntVec3(1, 2, 3);
+
+		vertTex[0] = FloatVec3(0.0f, 0.0f, 0.0f);
+		vertTex[1] = FloatVec3(0.0f, 1.0f, 0.0f);
+		vertTex[2] = FloatVec3(1.0f, 0.0f, 0.0f);
+		vertTex[3] = FloatVec3(1.0f, 1.0f, 0.0f);
+	}
+
 	void Cube(float size)
 	{
 		float a = size / 2.0f;
@@ -168,7 +166,7 @@ public:
 		vSize = 8;
 		tSize = 12;
 
-		reset();
+		Reset();
 
 		vertices[0] = FloatVec3(-a, a, -a);
 		vertices[1] = FloatVec3(-a, a, a);
@@ -191,6 +189,15 @@ public:
 		indices[9] = IntVec3(2, 4, 0);
 		indices[10] = IntVec3(6, 7, 4);
 		indices[11] = IntVec3(4, 7, 5);
+
+		vertTex[0] = FloatVec3(0.0f, 0.0f, 0.0f);
+		vertTex[1] = FloatVec3(0.0f, 1.0f, 0.0f);
+		vertTex[2] = FloatVec3(1.0f, 0.0f, 0.0f);
+		vertTex[3] = FloatVec3(1.0f, 1.0f, 0.0f);
+		vertTex[4] = FloatVec3(1.0f, 0.0f, 0.0f);
+		vertTex[5] = FloatVec3(1.0f, 1.0f, 0.0f);
+		vertTex[6] = FloatVec3(1.0f, 0.0f, 0.0f);
+		vertTex[7] = FloatVec3(0.0f, 1.0f, 0.0f);
 	}
 
 	void pyramid(float h, float r, int n)
@@ -201,7 +208,7 @@ public:
 		tSize = n * 2;
 		vSize = n + 2;
 
-		reset();
+		Reset();
 
 		vertices[0] = FloatVec3(0,0,0);
 		vertices[1] = FloatVec3(0, h, 0);
@@ -216,15 +223,9 @@ public:
 
 		for(int i = 0; i < n-1; i++)
 		{
-			//indices[i] = IntVec3(0, i + 2, i + 3);
-			//indices[n + i] = IntVec3(1, i + 3, i + 2);
-			
 			indices[i] = IntVec3(0, i + 3, i + 2);
 			indices[n + i] = IntVec3(1, i + 2, i + 3);
 		}
-
-		//indices[n - 1] = IntVec3(0, n + 1, 2);
-		//indices[n + n - 1] = IntVec3(1, 2, n + 1);
 
 		indices[n - 1] = IntVec3(0, 2, n + 1);
 		indices[n + n - 1] = IntVec3(1, n + 1, 2);
@@ -239,7 +240,7 @@ public:
 		tSize = 2 * n * m;
 		vSize = n * m + 2;
 
-		reset();
+		Reset();
 
 		vertices[0] = FloatVec3(0, 0, 0);
 		vertices[1] = FloatVec3(0, h, 0);
@@ -287,7 +288,7 @@ public:
 
 	}
 
-	int LoadObj(string fname)
+	int LoadObj(string const& fname)
 	{
 		list<float> verts;
 		list<int> faces;
@@ -379,7 +380,7 @@ public:
 		tSize = faces.size() / 3;
 		vSize = verts.size() / 3;
 
-		reset();
+		Reset();
 
 		//vertices assign
 		int vnum = 0;
@@ -464,5 +465,5 @@ public:
 		return ifintfinal;
 	}
 
-	void Draw(bool light, TgaBuffer& buff, VertexProcessor& vp, TgaBuffer& texBuff);
+	void Draw(bool light, TgaBuffer& buff, VertexProcessor& vp, TgaBuffer& texBuff, bool pixLight, bool pLight, bool dLight);
 };

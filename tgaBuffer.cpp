@@ -2,6 +2,7 @@
 #include <cstdio>
 #include <stdlib.h>
 #include <algorithm>
+#include <array>
 
 #include "VertexProcessor.h"
 
@@ -17,15 +18,11 @@ TgaBuffer::TgaBuffer(int w, int h)
 	maxy = height - 1;
 
 	len = w * h;
-	color = new unsigned int[len];
-	depth = new float[len];
+	color.resize(len);
+	depth.resize(len);
 }
 
-TgaBuffer::~TgaBuffer()
-{
-	delete depth;
-	delete color;
-}
+TgaBuffer::~TgaBuffer() = default;
 
 int TgaBuffer::ClearColor(unsigned int col)
 {
@@ -57,12 +54,13 @@ bool CheckFill(float dx, float y, float yn, float dy, float x, float xn, bool ge
 	return dx * (y - yn) - dy * (x - xn) > 0;
 }
 
-void TgaBuffer::DrawTriangle(bool light, TgaBuffer& texBuffer, Triangle texCo, float x1, float y1, float z1, float x2, float y2, float z2, float x3, float y3, float z3, FloatVec3 trc, Triangle trn, Triangle trview, VertexProcessor& vp)
+void TgaBuffer::DrawTriangle(bool light, TgaBuffer& texBuffer, Triangle texCo, float x1, float y1, float z1, float x2, float y2, float z2, float x3, float y3, float z3, FloatVec3 trc, Triangle trn, Triangle trview, VertexProcessor& vp, bool pixLight, bool pLight, bool dLight)
 {
 	//FloatVec3 plightc(0.f, 1.f, 0.f);
-
+	// 
 	//FloatVec3 dlight(1.f, 0.f, -0.5f);
 
+	//point light center
 	FloatVec3 plightc(0.f, 10.f, 25.f);
 	plightc = plightc * vp.world2view;
 
@@ -125,20 +123,20 @@ void TgaBuffer::DrawTriangle(bool light, TgaBuffer& texBuffer, Triangle texCo, f
 				float dlightint = 0;
 				float attenuation = 1.0f;
 
-				FloatVec3 normal = trn.a * lam1 + trn.b * lam2 + trn.c * lam3;////////////aaaaaaaaaaaa interpolacja normalnych
+				FloatVec3 normal = trn.a * lam1 + trn.b * lam2 + trn.c * lam3;// normal interpolation
 
 				FloatVec3 pixpos;
 
 				pixpos = trview.a * lam1 + trview.b * lam2 + trview.c * lam3;
 
-				if (false)
+				if (pixLight && pLight)
 				{
 					plightint = max(0.0f, (pixpos - plightc).Normalized().Dot(FloatVec3(0, 0, 0) - normal));
 
 					attenuation = 1.0f / (1.0f + 0.027f * (pixpos - plightc).Magnitude() + 0.00028f * (pixpos - plightc).Magnitude() * (pixpos - plightc).Magnitude());
 				}
 
-				if (true)
+				if (pixLight && dLight)
 				{
 					dlightint = max(0.0f, (FloatVec3(0, 0, 0) - normal).Dot(dlight));
 				}
@@ -147,15 +145,23 @@ void TgaBuffer::DrawTriangle(bool light, TgaBuffer& texBuffer, Triangle texCo, f
 				unsigned int col2 = 0;
 				unsigned int col3 = 0;
 
-				if (false)
+				if (!pixLight)
 				{
-					col1 = (int)(lam1 * trc.x * 255.f) * 0x00000100;
-					col2 = (int)(lam2 * trc.y * 255.f) * 0x00000100;
-					col3 = (int)(lam3 * trc.z * 255.f) * 0x00000100;
+					//intensity of light on different verteces
+					if (light) {
+						col1 = (int)(lam1 * trc.x * 255.f) * 0x00000100;
+						col2 = (int)(lam2 * trc.y * 255.f) * 0x00000100;
+						col3 = (int)(lam3 * trc.z * 255.f) * 0x00000100;
+					}
 				}
 				else
 				{
+
 					float int1col = dlightint + plightint * attenuation;
+
+					//ambient light
+					float aLight = 0.2f;
+					int1col = min(int1col + aLight, 1.0f);
 
 					if (!light)
 						int1col = 1.0f;
@@ -163,9 +169,11 @@ void TgaBuffer::DrawTriangle(bool light, TgaBuffer& texBuffer, Triangle texCo, f
 					float texx = texCo.a.x * lam1 + texCo.b.x * lam2 + texCo.c.x * lam3;
 					float texy = texCo.a.y * lam1 + texCo.b.y * lam2 + texCo.c.y * lam3;
 
-					unsigned int red = ((texBuffer.color[(int)texy * 512 + (int)texx]) & 0x00ff0000);
-					unsigned int green = ((texBuffer.color[(int)texy * 512 + (int)texx]) & 0x0000ff00);
-					unsigned int blue = ((texBuffer.color[(int)texy * 512 + (int)texx]) & 0x000000ff);
+					auto index = static_cast<int>(floor((1.0f - texy) * 511.0f) * 512.0f + texx * 511.0f);
+
+					unsigned int red = ((texBuffer.color[index]) & 0x00ff0000);
+					unsigned int green = ((texBuffer.color[index]) & 0x0000ff00);
+					unsigned int blue = ((texBuffer.color[index]) & 0x000000ff);
 
 					red = (((unsigned int)((float)red * int1col)) & 0x00ff0000);
 					green = (((unsigned int)((float)green * int1col)) & 0x0000ff00);
@@ -187,9 +195,9 @@ void TgaBuffer::DrawTriangle(bool light, TgaBuffer& texBuffer, Triangle texCo, f
 	}
 }
 
-void TgaBuffer::DrawTriangle(bool light, TgaBuffer& texBuffer, Triangle texCo, Triangle t, FloatVec3 trc, Triangle trn, Triangle trview, VertexProcessor& vp)
+void TgaBuffer::DrawTriangle(bool light, TgaBuffer& texBuffer, Triangle texCo, Triangle t, FloatVec3 trc, Triangle trn, Triangle trview, VertexProcessor& vp, bool pixLight, bool pLight, bool dLight)
 {
-	DrawTriangle(light, texBuffer, texCo, t.a.x, t.a.y, t.a.z, t.b.x, t.b.y, t.b.z, t.c.x, t.c.y, t.c.z, trc, trn, trview, vp);
+	DrawTriangle(light, texBuffer, texCo, t.a.x, t.a.y, t.a.z, t.b.x, t.b.y, t.b.z, t.c.x, t.c.y, t.c.z, trc, trn, trview, vp, pixLight, pLight, dLight);
 }
 
 void TgaBuffer::DrawSphereOrtho(Sphere sph1, Sphere sph2, int width, int height)
@@ -219,7 +227,7 @@ void TgaBuffer::DrawSphereOrtho(Sphere sph1, Sphere sph2, int width, int height)
 			}
 
 			//second sphere
-			hit = sph2.IntersectRay(ray, 0.1f, 1000.0f, intersetiona, intersetionb); ///////////////////NASZTYWNOAAAAAAAAAAAAAAAAAAA
+			hit = sph2.IntersectRay(ray, 0.1f, 1000.0f, intersetiona, intersetionb); ///////////////////NASZTYWNO
 
 			if (hit != 0 && depth[x + y * width] > intersetiona.Magnitude())
 			{
@@ -229,7 +237,7 @@ void TgaBuffer::DrawSphereOrtho(Sphere sph1, Sphere sph2, int width, int height)
 
 			//bg plain
 			Plane plane(FloatVec3(0.f, 0.f, 500.f), FloatVec3(0.f, 0.f, 1.f));
-			hit = plane.IntersectRay(ray, 0.1f, 1000.0f, intersetiona); ///////////////////NASZTYWNOAAAAAAAAAAAAAAAAAAA
+			hit = plane.IntersectRay(ray, 0.1f, 1000.0f, intersetiona); ///////////////////NASZTYWNO
 
 			if (hit == 1 && depth[x + y * width] > intersetiona.Magnitude())
 			{
@@ -243,15 +251,14 @@ void TgaBuffer::DrawSphereOrtho(Sphere sph1, Sphere sph2, int width, int height)
 inline FloatVec3 probe(
 	float srodekX, float srodekY, Sphere sph1, Sphere sph2, Mesh* mesh, float widthPixel, float heightPixel, FloatVec3 cap, FloatVec3 w, FloatVec3 u, FloatVec3 v, int depth)
 {
-	//unsigned int colors[5] = {0x00aaaaaa, 0x00aaaaaa, 0x00aaaaaa, 0x00aaaaaa, 0x00aaaaaa};
-	FloatVec3 colors[5];
+	std::array<FloatVec3, 5> colors;
 	widthPixel /= 2.0f;
 	heightPixel /= 2.0f;
 
 	for (int i = 0; i < 5; i++)
 	{
-		float wfov = tan(M_PI_4);
-		float hfov = tan(M_PI_4); //vertical fov leave alone
+		float wfov = tan(static_cast<float>(M_PI_4));
+		float hfov = tan(static_cast<float>(M_PI_4)); //vertical fov leave alone
 
 		FloatVec3 d = u * wfov * srodekX + v * hfov * srodekY + w;
 
@@ -269,6 +276,8 @@ inline FloatVec3 probe(
 		case 4:
 			d = u * (srodekX+widthPixel)+v * (srodekY-heightPixel)+w;
 			break;
+		default:	
+			break;
 		}
 
 		Ray ray(cap, d);
@@ -281,7 +290,7 @@ inline FloatVec3 probe(
 		int hit = 0;
 
 		//first sphere
-		/*
+		
 		hit = sph1.IntersectRay(ray, 0.1f, 1000.0f, intersetiona, intersetionb);
 
 		if (hit != 0)
@@ -298,7 +307,6 @@ inline FloatVec3 probe(
 			col = FloatVec3(170.f, 0.f, 0.f);
 			dep = (intersetiona - cap).Magnitude();
 		}
-		*/
 
 		//bg plain
 		Plane plane(FloatVec3(0.f, 0.f, -10000.f), FloatVec3(0.f, 0.f, 1.f));
@@ -360,8 +368,8 @@ void TgaBuffer::DrawSpherePersp(Sphere sph1, Sphere sph2, Mesh* mesh, int width,
 	{
 		for (int y = 0; y < height; y++)
 		{
-			float srodekX = -1.0f + (x + 0.5f) * widthPixel;
-			float srodekY = 1.0f - (y + 0.5f) * heightPixel;
+			float srodekX = -1.0f + (static_cast<float>(x) + 0.5f) * widthPixel;
+			float srodekY = 1.0f - (static_cast<float>(y) + 0.5f) * heightPixel;
 
 			FloatVec3 colvec = probe(srodekX, srodekY, sph1, sph2, mesh, widthPixel, heightPixel, cap, w, u, v, 0);
 
@@ -376,7 +384,7 @@ void TgaBuffer::DrawSpherePersp(Sphere sph1, Sphere sph2, Mesh* mesh, int width,
 
 int TgaBuffer::Save()
 {
-	unsigned short header[9] = {
+	std::array<unsigned short, 9> header = {
 		0x0000, 0x0002, 0x0000, 0x0000, 0x0000, 0x0000,
 		0x0100, 0x0100,
 		 0x0820
@@ -385,38 +393,38 @@ int TgaBuffer::Save()
 	FILE* f;
 	errno_t err = fopen_s(&f, "render.tga", "wb+");
 
-	if (f == nullptr)
+	if (f == nullptr) {
+		printf("Error: %i opening file %s\n", err, "render.tga");
 		return -1;
+	}
 
-	header[6] = width;
-	header[7] = height;
+	header[6] = static_cast<unsigned short>(width);
+	header[7] = static_cast<unsigned short>(height);
 
-	fwrite(header, 2, 9, f);
+	fwrite(header.data(), 2, 9, f);
 
-	fwrite(color, 4, len, f);
+	fwrite(color.data(), 4, len, f);
 
 	fclose(f);
 
 	return 0;
 }
 
-int TgaBuffer::Load(string file)
+int TgaBuffer::Load(string const &file)
 {
-	unsigned short header[9] = {
-		0x0000, 0x0002, 0x0000, 0x0000, 0x0000, 0x0000,
-		0x0100, 0x0100,
-		 0x0820
-	};
+	std::array<unsigned short, 9> header;
 
 	FILE* f;
-	errno_t err = fopen_s(&f, file.c_str(), "r");
+	errno_t err = fopen_s(&f, file.c_str(), "rb");
 
-	if (f == nullptr)
+	if (f == nullptr) {
+		printf("Error: %i opening file %s\n", err, file.c_str());
 		return -1;
+	}
 
-	fread(header, 2, 9, f);
+	fread(header.data(), 2, 9, f);
 
-	fread(color, 4, len, f);
+	fread(color.data(), 4, len, f);
 
 	fclose(f);
 

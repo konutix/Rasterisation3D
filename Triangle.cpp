@@ -4,7 +4,22 @@
 
 using namespace std;
 
-void Mesh::Draw(bool light, TgaBuffer& buffer, VertexProcessor& vp, TgaBuffer& texBuffer)
+void Mesh::Reset()
+{
+	vertices.clear();
+	vertices.resize(vSize);
+
+	vertNormals.clear();
+	vertNormals.resize(vSize);
+
+	vertTex.clear();
+	vertTex.resize(vSize);
+
+	indices.clear();
+	indices.resize(tSize);
+}
+
+void Mesh::Draw(bool light, TgaBuffer& buffer, VertexProcessor& vp, TgaBuffer& texBuffer, bool pixLight, bool pLight, bool dLight)
 {
 	FloatVec3 plightc(0.f, 10.f, 25.f);
 
@@ -33,7 +48,7 @@ void Mesh::Draw(bool light, TgaBuffer& buffer, VertexProcessor& vp, TgaBuffer& t
 		float dlightint2 = 0;
 		float dlightint3 = 0;
 
-		if (true)
+		if (!pixLight && pLight)
 		{
 			plightint1 = max(0.0f, (tr.a - plightc).Normalized().Dot(FloatVec3(0, 0, 0) - trn.a));
 			plightint2 = max(0.0f, (tr.b - plightc).Normalized().Dot(FloatVec3(0, 0, 0) - trn.b));
@@ -44,7 +59,7 @@ void Mesh::Draw(bool light, TgaBuffer& buffer, VertexProcessor& vp, TgaBuffer& t
 		float attenuation2 = 1.0f / (1.0f + 0.027f * (tr.b - plightc).Magnitude() + 0.00028f * (tr.b - plightc).Magnitude() * (tr.b - plightc).Magnitude());
 		float attenuation3 = 1.0f / (1.0f + 0.027f * (tr.c - plightc).Magnitude() + 0.00028f * (tr.c - plightc).Magnitude() * (tr.c - plightc).Magnitude());
 
-		if (false)
+		if (!pixLight && dLight)
 		{
 			dlightintl = max(0.0f, (FloatVec3(0, 0, 0) - trn.a).Dot(dlight));
 			dlightint2 = max(0.0f, (FloatVec3(0, 0, 0) - trn.b).Dot(dlight));
@@ -68,6 +83,6 @@ void Mesh::Draw(bool light, TgaBuffer& buffer, VertexProcessor& vp, TgaBuffer& t
 
 		tr.Transform(vp.view2proj);
 
-		buffer.DrawTriangle(light, texBuffer, texCo, tr, trc, trn, trview, vp);
+		buffer.DrawTriangle(light, texBuffer, texCo, tr, trc, trn, trview, vp, pixLight, pLight, dLight);
 	}
 }
