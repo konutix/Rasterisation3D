@@ -399,3 +399,8 @@ FodyWeavers.xsd
 
 #result files
 render.tga
+
+#exceptions
+!teapot.obj
+!dodecahedron.obj
+!triangle.obj
