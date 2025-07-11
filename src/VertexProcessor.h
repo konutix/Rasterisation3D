@@ -8,7 +8,9 @@ class VertexProcessor
 public:
 
 	FloatMat4 rotation;
-	FloatMat4 obj2world, world2view, view2proj;
+	FloatMat4 obj2world;
+	FloatMat4 world2view;
+	FloatMat4 view2proj;
 
 	VertexProcessor()
 	{

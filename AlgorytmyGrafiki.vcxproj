@@ -127,17 +127,17 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="AlgorytmyGrafiki.cpp" />
-    <ClCompile Include="MathGraLib.cpp" />
-    <ClCompile Include="TgaBuffer.cpp" />
-    <ClCompile Include="Triangle.cpp" />
-    <ClCompile Include="VertexProcessor.cpp" />
+    <ClCompile Include="src\AlgorytmyGrafiki.cpp" />
+    <ClCompile Include="src\Mesh.cpp" />
+    <ClCompile Include="src\TgaBuffer.cpp" />
+    <ClCompile Include="src\Triangle.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="MathGraLib.h" />
-    <ClInclude Include="TgaBuffer.h" />
-    <ClInclude Include="Triangle.h" />
-    <ClInclude Include="VertexProcessor.h" />
+    <ClInclude Include="src\MathGraLib.h" />
+    <ClInclude Include="src\Mesh.h" />
+    <ClInclude Include="src\TgaBuffer.h" />
+    <ClInclude Include="src\Triangle.h" />
+    <ClInclude Include="src\VertexProcessor.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

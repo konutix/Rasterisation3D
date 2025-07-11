@@ -5,7 +5,16 @@
 const int width = 1024;
 const int height = 1024;
 
-int fotmain() //fotoreal
+int rayTracer();
+int meshRender();
+
+int main()
+{
+    //return rayTracer();
+    return meshRender();
+}
+
+int rayTracer() //fotoreal
 {
     TgaBuffer buffer(width, height);
 
@@ -34,12 +43,12 @@ int fotmain() //fotoreal
     return 0;
 }
 
-int main() //algorytmy
+int meshRender() //algorytmy
 {
     //texture buffer
     TgaBuffer texBuffer(512, 512);
     texBuffer.ClearColor(0xffaaaaaa);
-	string fileName = "lightbrick.tga";
+    std::string fileName = "lightbrick.tga";
     //string fileName = "redbrick.tga";
     texBuffer.Load(fileName);
 

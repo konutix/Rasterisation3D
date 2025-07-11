@@ -1,8 +1,6 @@
-#include "Triangle.h"
-#include "tgaBuffer.h"
+#include "Mesh.h"
 #include "VertexProcessor.h"
-
-using namespace std;
+#include "tgaBuffer.h"
 
 void Mesh::Reset()
 {
@@ -29,7 +27,7 @@ void Mesh::Draw(bool light, TgaBuffer& buffer, VertexProcessor& vp, TgaBuffer& t
 
 	calcNormals();
 
-	for(int i = 0; i < tSize; i++)
+	for (int i = 0; i < tSize; i++)
 	{
 		Triangle tr(vertices[indices[i].a], vertices[indices[i].b], vertices[indices[i].c]);
 		Triangle trn(vertNormals[indices[i].a], vertNormals[indices[i].b], vertNormals[indices[i].c]);
@@ -50,9 +48,9 @@ void Mesh::Draw(bool light, TgaBuffer& buffer, VertexProcessor& vp, TgaBuffer& t
 
 		if (!pixLight && pLight)
 		{
-			plightint1 = max(0.0f, (tr.a - plightc).Normalized().Dot(FloatVec3(0, 0, 0) - trn.a));
-			plightint2 = max(0.0f, (tr.b - plightc).Normalized().Dot(FloatVec3(0, 0, 0) - trn.b));
-			plightint3 = max(0.0f, (tr.c - plightc).Normalized().Dot(FloatVec3(0, 0, 0) - trn.c));
+			plightint1 = std::max(0.0f, (tr.a - plightc).Normalized().Dot(FloatVec3(0, 0, 0) - trn.a));
+			plightint2 = std::max(0.0f, (tr.b - plightc).Normalized().Dot(FloatVec3(0, 0, 0) - trn.b));
+			plightint3 = std::max(0.0f, (tr.c - plightc).Normalized().Dot(FloatVec3(0, 0, 0) - trn.c));
 		}
 
 		float attenuation1 = 1.0f / (1.0f + 0.027f * (tr.a - plightc).Magnitude() + 0.00028f * (tr.a - plightc).Magnitude() * (tr.a - plightc).Magnitude());
@@ -61,9 +59,9 @@ void Mesh::Draw(bool light, TgaBuffer& buffer, VertexProcessor& vp, TgaBuffer& t
 
 		if (!pixLight && dLight)
 		{
-			dlightintl = max(0.0f, (FloatVec3(0, 0, 0) - trn.a).Dot(dlight));
-			dlightint2 = max(0.0f, (FloatVec3(0, 0, 0) - trn.b).Dot(dlight));
-			dlightint3 = max(0.0f, (FloatVec3(0, 0, 0) - trn.c).Dot(dlight));
+			dlightintl = std::max(0.0f, (FloatVec3(0, 0, 0) - trn.a).Dot(dlight));
+			dlightint2 = std::max(0.0f, (FloatVec3(0, 0, 0) - trn.b).Dot(dlight));
+			dlightint3 = std::max(0.0f, (FloatVec3(0, 0, 0) - trn.c).Dot(dlight));
 		}
 
 		float vert1col = dlightintl + plightint1 * attenuation1;
@@ -72,9 +70,9 @@ void Mesh::Draw(bool light, TgaBuffer& buffer, VertexProcessor& vp, TgaBuffer& t
 
 		FloatVec3 trc;
 
-		trc.x = min(1.0f, vert1col);
-		trc.y = min(1.0f, vert2col);
-		trc.z = min(1.0f, vert3col);
+		trc.x = std::min(1.0f, vert1col);
+		trc.y = std::min(1.0f, vert2col);
+		trc.z = std::min(1.0f, vert3col);
 
 
 		tr.Transform(vp.world2view);

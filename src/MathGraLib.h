@@ -8,37 +8,29 @@
 
 #include <iostream>
 
-using namespace std;
-
 class IntVec3
 {
 
 public:
 
-	int a, b, c;
+	int a;
+	int b;
+	int c;
 
 	IntVec3()
 	{
 		a = b = c = 0;
 	}
 
-	IntVec3(int v1, int v2, int v3)
-	{
-		a = v1;
-		b = v2;
-		c = v3;
-	}
+	IntVec3(int v1, int v2, int v3) : 
+		a(v1), b(v2), c(v3)
+	{}
 
 	int& operator[](int i)
 	{
 		if (i <= 0) return a;
 		if (i == 1) return b;
 		return c;
-	}
-
-	void Print()
-	{
-		cout << "x: " << a << " y: " << b << " z: " << c << endl;
 	}
 };
 
@@ -47,21 +39,16 @@ class FloatVec4
 
 public:
 
-	float x, y, z, w;
+	float x = 0.0f;
+	float y = 0.0f;
+	float z = 0.0f;
+	float w = 1.0f;
 
-	FloatVec4()
-	{
-		x = y = z = 0.0f;
-		w = 1.0f;
-	}
+	FloatVec4() = default;
 
-	FloatVec4(float a, float b, float c, float d)
-	{
-		x = a;
-		y = b;
-		z = c;
-		w = d;
-	}
+	FloatVec4(float a, float b, float c, float d) : 
+		x(a), y(b), z(c), w(d)
+	{}
 
 	float& operator[](int i)
 	{
@@ -88,33 +75,22 @@ class FloatVec3
 
 public:
 
-	float x, y, z;
+	float x = 1.0f;
+	float y = 1.0f;
+	float z = 1.0f;
 
-	FloatVec3()
-	{
-		x = 1.f;
-		y = 1.f;
-		z = 1.f;
-	}
+	FloatVec3() = default;
 
-	FloatVec3(float px, float py, float pz)
-	{
-		x = px;
-		y = py;
-		z = pz;
-	}
+	FloatVec3(float px, float py, float pz):
+		x(px), y(py), z(pz)
+	{}
 
-	void Print()
-	{
-		cout << "x: " << x << " y: " << y << " z: " << z << endl;
-	}
-
-	bool operator==(FloatVec3 vec)
+	bool operator==(FloatVec3 vec) const
 	{
 		return (this->x == vec.x && this->y == vec.y && this->z == vec.z);
 	}
 
-	bool operator!=(FloatVec3 vec)
+	bool operator!=(FloatVec3 vec) const
 	{
 		return !(*this == vec);
 	}
@@ -162,12 +138,12 @@ public:
 		z /= d;
 	}
 
-	float Magnitude()
+	float Magnitude() const
 	{
 		return sqrt(x * x + y * y + z * z);
 	}
 
-	FloatVec3 Normalized()
+	FloatVec3 Normalized() const
 	{
 		const float epsilon = 0.000001f;
 		const float mag = Magnitude();
@@ -199,24 +175,24 @@ public:
 		}
 	}
 
-	float Dot(FloatVec3 const& vec)
+	float Dot(FloatVec3 const& vec) const
 	{
 		return x * vec.x + y * vec.y + z * vec.z;
 	}
 
-	float AngleRad(FloatVec3 vec)
+	float AngleRad(FloatVec3 vec) const
 	{
 		FloatVec3 a = Normalized();
 		FloatVec3 b = vec.Normalized();
 		return acos(a.Dot(b));
 	}
 
-	float AngleDeg(FloatVec3 const& vec)
+	float AngleDeg(FloatVec3 const& vec) const
 	{
 		return AngleRad(vec) / (2.0f * static_cast<float>(M_PI)) * 360.f;
 	}
 
-	FloatVec3 Cross(FloatVec3 const& vec)
+	FloatVec3 Cross(FloatVec3 const& vec) const
 	{
 		return FloatVec3(y * vec.z - z * vec.y,z * vec.x - x * vec.z,x * vec.y - y * vec.x);
 	}
@@ -239,7 +215,10 @@ class FloatMat4
 
 public:
 
-	FloatVec4 c1, c2, c3, c4;
+	FloatVec4 c1;
+	FloatVec4 c2;
+	FloatVec4 c3;
+	FloatVec4 c4;
 
 	FloatMat4()
 	{
@@ -315,7 +294,7 @@ inline FloatVec4 operator*(FloatVec4 const& vec, FloatMat4 mat)
 	return temp;
 }
 
-inline FloatVec3 operator*(FloatVec3 const& vec, FloatMat4 mat)
+inline FloatVec3 operator*(FloatVec3 const& vec, FloatMat4 const& mat)
 {
 	FloatVec4 temp = FloatVec4(vec.x, vec.y, vec.z, 1.0f) * mat;
 
@@ -330,11 +309,10 @@ public:
 	FloatVec3 point;
 	FloatVec3 dir;
 
-	Ray(FloatVec3 p, FloatVec3 d)
-	{
-		point = p;
-		dir = d.Normalized();
-	}
+	Ray(FloatVec3 p, FloatVec3 d):
+		point(p),
+		dir(d.Normalized())
+	{}
 
 	void PointAt(FloatVec3 p)
 	{
@@ -352,13 +330,12 @@ public:
 	FloatVec3 point;
 	float rad;
 
-	Sphere(FloatVec3 p, float r)
-	{
-		point = p;
-		rad = r;
-	}
+	Sphere(FloatVec3 p, float r):
+		point(p),
+		rad(r)
+	{}
 
-	int IntersectRay(Ray ray, float t_min, float t_max, FloatVec3& pa, FloatVec3& pb)
+	int IntersectRay(Ray ray, float t_min, float t_max, FloatVec3& pa, FloatVec3& pb) const
 	{
 		int points = 0;
 		FloatVec3 oc = ray.point - point;
@@ -413,13 +390,12 @@ public:
 	FloatVec3 point;
 	FloatVec3 normal;
 
-	Plane(FloatVec3 p, FloatVec3 n)
-	{
-		point = p;
-		normal = n.Normalized();
-	}
+	Plane(FloatVec3 p, FloatVec3 n):
+		point(p),
+		normal(n.Normalized())
+	{}
 
-	int IntersectRay(Ray ray, float t_min, float t_max, FloatVec3& pa)
+	int IntersectRay(Ray ray, FloatVec3& pa)
 	{
 		float dn = ray.dir.Dot(normal);
 

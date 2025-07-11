@@ -2,94 +2,7 @@
 #include <list>
 #include <string>
 #include <vector>
-
-#include "MathGraLib.h"
-
-#define PLUS_ZERO 0.00001
-#define MINUS_ZERO -0.0001
-
-class TgaBuffer;
-class VertexProcessor;
-
-class Triangle
-{
-public:
-
-	FloatVec3 a;
-	FloatVec3 b;
-	FloatVec3 c;
-
-	Triangle()
-	{
-		a = b = c = FloatVec3(0,0,0);
-	}
-
-	Triangle(FloatVec3 v1, FloatVec3 v2, FloatVec3 v3)
-		: a(v1), b(v2), c(v3)
-	{}
-
-	FloatVec3& operator[](int i)
-	{
-		if (i <= 0) return a;
-		if (i == 1) return b;
-		return c;
-	}
-
-	void Transform(FloatMat4 const& mat)
-	{
-		a = a * mat;
-		b = b * mat;
-		c = c * mat;
-	}
-
-	int IntersectRay(Ray ray, float t_min, float t_max, FloatVec3& pa)
-	{
-		FloatVec3 na = c - a;
-		FloatVec3 nb = b - a;
-
-		FloatVec3 norm = na.Cross(nb);
-		Plane plane(a,norm);
-
-		FloatVec3 intpoint;
-		int hit = plane.IntersectRay(ray, t_min, t_max, intpoint);
-
-		if(hit == 1)
-		{
-			FloatVec3 fa = a - intpoint;
-			FloatVec3 fb = b - intpoint;
-			FloatVec3 fc = c - intpoint;
-
-			fa.Normalize();
-			fb.Normalize();
-			fc.Normalize();
-
-			FloatVec3 x = fa.Cross(fb);
-			if(x.Dot(plane.normal) > PLUS_ZERO)
-			{
-				return 0;
-			}
-
-			x = fb.Cross(fc);
-			if(x.Dot(plane.normal) > PLUS_ZERO)
-			{
-				return 0;
-			}
-
-			x = fc.Cross(fa);
-			if (x.Dot(plane.normal) > PLUS_ZERO)
-			{
-				return 0;
-			}
-
-			pa = intpoint;
-			return 1;
-		}
-		else
-		{
-			return -1;
-		}
-	}
-};
+#include "Triangle.h"
 
 class Mesh
 {
@@ -109,12 +22,12 @@ public:
 	~Mesh() = default;
 
 	void Reset();
-	
+
 	void calcNormals()
 	{
 		for (int i = 0; i < vSize; i++)
 		{
-			vertNormals[i] = FloatVec3(0.f,0.f,0.f);
+			vertNormals[i] = FloatVec3(0.f, 0.f, 0.f);
 		}
 
 		for (int i = 0; i < tSize; i++)
@@ -210,18 +123,18 @@ public:
 
 		Reset();
 
-		vertices[0] = FloatVec3(0,0,0);
+		vertices[0] = FloatVec3(0, 0, 0);
 		vertices[1] = FloatVec3(0, h, 0);
 
 		float t = 0.0f;
 
-		for(int i = 2; i < vSize; i++)
+		for (int i = 2; i < vSize; i++)
 		{
-			vertices[i] = FloatVec3(r * cos(t),  0.0f, r * sin(t));
+			vertices[i] = FloatVec3(r * cos(t), 0.0f, r * sin(t));
 			t += step;
 		}
 
-		for(int i = 0; i < n-1; i++)
+		for (int i = 0; i < n - 1; i++)
 		{
 			indices[i] = IntVec3(0, i + 3, i + 2);
 			indices[n + i] = IntVec3(1, i + 2, i + 3);
@@ -235,7 +148,7 @@ public:
 	{
 		float p2 = 2.0f * static_cast<float>(M_PI);
 		float vstep = p2 / static_cast<float>(n);
-		float hstep = h / static_cast<float>(m-1);
+		float hstep = h / static_cast<float>(m - 1);
 
 		tSize = 2 * n * m;
 		vSize = n * m + 2;
@@ -264,7 +177,7 @@ public:
 		{
 			indices[i] = IntVec3(0, i + 3, i + 2);
 
-			for (int j = 0; j < m-1; j++)
+			for (int j = 0; j < m - 1; j++)
 			{
 				indices[n + j * n + i] = IntVec3(2 + n + i + j * n, i + 2 + j * n, i + 3 + j * n);
 
@@ -284,14 +197,14 @@ public:
 			indices[(m - 1) * n + 2 * n - 1 + j * n] = IntVec3(2 * n + j * n + 1, n + j * n + n, j * n + 1 + n);
 		}
 
-		indices[tSize - 1] = IntVec3(1, n * m + 1, (m-1)*n + 2);
+		indices[tSize - 1] = IntVec3(1, n * m + 1, (m - 1) * n + 2);
 
 	}
 
-	int LoadObj(string const& fname)
+	int LoadObj(std::string const& fname)
 	{
-		list<float> verts;
-		list<int> faces;
+		std::list<float> verts;
+		std::list<int> faces;
 
 		FILE* f;
 		errno_t err = fopen_s(&f, fname.c_str(), "r");
@@ -306,7 +219,7 @@ public:
 
 		bool newline = false;
 
-		while(!feof(f))
+		while (!feof(f))
 		{
 			fgets(singleLine, 256, f);
 
@@ -316,9 +229,9 @@ public:
 				{
 					newline = singleLine[i] == '\n';
 
-					if(singleLine[i] == ' ' || newline)
+					if (singleLine[i] == ' ' || newline)
 					{
-						if(size > 0)
+						if (size > 0)
 						{
 							std::string word(data, size);
 
@@ -340,7 +253,7 @@ public:
 				}
 				newline = false;
 			}
-			else if(singleLine[0] == 'f')
+			else if (singleLine[0] == 'f')
 			{
 				for (int i = 1; !newline; i++)
 				{
@@ -377,8 +290,8 @@ public:
 
 		faces.pop_back();
 
-		tSize = faces.size() / 3;
-		vSize = verts.size() / 3;
+		tSize = static_cast<int>(faces.size()) / 3;
+		vSize = static_cast<int>(verts.size()) / 3;
 
 		Reset();
 
@@ -388,13 +301,13 @@ public:
 
 		a = b = c = 0.0f;
 
-		for(float vertice : verts)
+		for (float vertice : verts)
 		{
 			if (vnum % 3 == 0)
 			{
-				if(vnum != 0)
+				if (vnum != 0)
 				{
-					vertices[vnum / 3 - 1] = FloatVec3(a,b,c);
+					vertices[vnum / 3 - 1] = FloatVec3(a, b, c);
 				}
 
 				a = vertice;
@@ -415,7 +328,7 @@ public:
 
 		x = y = z = 0;
 
-		for(int tri : faces)
+		for (int tri : faces)
 		{
 			if (fnum % 3 == 0)
 			{
@@ -439,21 +352,21 @@ public:
 		return 0;
 	}
 
-	int IntersectRay(Ray ray, float t_min, float t_max, FloatVec3& pa)
+	int IntersectRay(Ray ray, FloatVec3& pa)
 	{
 		float depth = 99999.0f;
 		int ifint = 0;
 		int ifintfinal = 0;
 		FloatVec3 intp;
 
-		for(int i = 0; i < tSize; i++)
+		for (int i = 0; i < tSize; i++)
 		{
 			Triangle tri(vertices[indices[i].a], vertices[indices[i].b], vertices[indices[i].c]);
 
 			FloatVec3 ref;
-			ifint = tri.IntersectRay(ray, t_min, t_max, ref);
+			ifint = tri.IntersectRay(ray, ref);
 
-			if(ifint == 1 && (ray.point - ref).Magnitude() < depth)
+			if (ifint == 1 && (ray.point - ref).Magnitude() < depth)
 			{
 				depth = (ray.point - ref).Magnitude();
 				ifintfinal = 1;

@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Triangle.h"
+#include "Mesh.h"
 #include <vector>
 
 struct SphereProps{
@@ -18,10 +19,6 @@ public:
 
 	int width;
 	int height;
-	int minx;
-	int maxx;
-	int miny;
-	int maxy;
 	int len;
 
 	TgaBuffer(int w, int h);
@@ -37,6 +34,6 @@ public:
 	void DrawSpherePersp(Sphere sph1, Sphere sph2, Mesh* mesh, int width, int height, FloatVec3 cap, FloatVec3 cad, FloatVec3 vup);
 
 	int Save();
-	int Load(string const &file);
+	int Load(std::string const &file);
 
 };
